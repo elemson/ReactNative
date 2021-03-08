@@ -8,6 +8,7 @@ require("../lib/swisscalc.display.memoryDisplay.js");
 require("../lib/swisscalc.calc.calculator.js");
 
 import React from 'react';
+import * as SQLite from 'expo-sqlite';
 import { StyleSheet, Dimensions, PanResponder, View, Text } from 'react-native';
 import { CalcDisplay, CalcButton } from './../components';
 
@@ -18,11 +19,28 @@ export default class CalculatorScreen extends React.Component {
     this.state = {
       display: "0",
       orientation: "portrait",    // "portrait" or "landscape"
+	  history: []
     }
-    
     // Initialize calculator...
     this.oc = global.swisscalc.lib.operatorCache;
     this.calc = new global.swisscalc.calc.calculator();
+
+	// Sqlite db
+	const db =SQLite.openDatabase('history.db')
+	// this.success, //okcallback
+	// this.fail // error callback
+
+
+      db.transaction(tx => {
+        tx.executeSql('SELECT * FROM history', [], (tx, results) => {
+          let history = [];
+          for (let i = 0; i < results.rows.length; i++) {
+            history.push(results.rows.item(i));
+          }
+
+           this.setState({ history });
+        });
+      });
 
     // Listen for orientation changes...
     Dimensions.addEventListener('change', () => {
@@ -48,37 +66,48 @@ export default class CalculatorScreen extends React.Component {
 
   onDigitPress = (digit) => {
     this.calc.addDigit(digit);
-    this.setState({ display: this.calc.getMainDisplay() });
+	let recentHistory = this.state.history.concat(digit)
+    this.setState({ display: this.calc.getMainDisplay(), history: recentHistory });
   }
 
   onUnaryOperatorPress = (operator) => {
     this.calc.addUnaryOperator(operator);
-    this.setState({ display: this.calc.getMainDisplay() });
+   let recentHistory = this.state.history.concat(this.calc.getMainDisplay())
+    this.setState({ display: this.calc.getMainDisplay(), history: recentHistory });
   }
 
-  onBinaryOperatorPress = (operator) => {
+  onBinaryOperatorPress = (operator, operatorSign) => {
     this.calc.addBinaryOperator(operator);
-    this.setState({ display: this.calc.getMainDisplay() });
+    let recentHistory = this.state.history.concat(operatorSign)
+    this.setState({ display: this.calc.getMainDisplay(), history: recentHistory });
   }
 
-  onEqualsPress = () => {
+  onEqualsPress = (operator) => {
     this.calc.equalsPressed();
-    this.setState({ display: this.calc.getMainDisplay() });
+    let recentHistory = this.state.history.concat(operator, this.calc.getMainDisplay()).toString().replace(/,/g,"");
+	this.setState({ display: recentHistory, history: recentHistory })
+
+	setTimeout(() => {
+		localStorage.setItem("Calc", this.state.history)
+		console.log(this.state.history)
+ 	}, 3000);
   }
 
   onClearPress = () => {
     this.calc.clear();
-    this.setState({ display: this.calc.getMainDisplay() });
+    this.setState({ display: this.calc.getMainDisplay(), history: [] });
   }
 
-  onPlusMinusPress = () => {
+  onPlusMinusPress = (operator) => {
     this.calc.negate();
-    this.setState({ display: this.calc.getMainDisplay() });
+    let recentHistory = this.state.history.concat(operator)
+    this.setState({ display: this.calc.getMainDisplay(), history: recentHistory });
   }
 
   onBackspacePress = () => {
     this.calc.backspace();
-    this.setState({ display: this.calc.getMainDisplay() });
+    let recentHistory = this.state.history.concat(this.calc.getMainDisplay())
+    this.setState({ display: this.calc.getMainDisplay(), history: recentHistory });
   }
 
   renderPortrait() {
@@ -93,34 +122,34 @@ export default class CalculatorScreen extends React.Component {
             <CalcButton onPress={this.onClearPress} title="AC" color="white" backgroundColor="#DCC894" />
             <CalcButton onPress={this.onPlusMinusPress} title="+/-" color="white" backgroundColor="#DCC894" />
             <CalcButton onPress={() => { this.onUnaryOperatorPress(this.oc.PercentOperator) }} title="%" color="white" backgroundColor="#DCC894" />
-            <CalcButton onPress={() => { this.onBinaryOperatorPress(this.oc.DivisionOperator) }} title="/" color="white" backgroundColor="#DCA394" />
+            <CalcButton onPress={() => { this.onBinaryOperatorPress(this.oc.DivisionOperator, '/'); }} title="/" color="white" backgroundColor="#DCA394" />
           </View>
 
           <View style={{flexDirection: "row", justifyContent: "space-between",}}>
             <CalcButton onPress={() => { this.onDigitPress("7") }} title="7" color="white" backgroundColor="#607D8B" />
             <CalcButton onPress={() => { this.onDigitPress("8") }} title="8" color="white" backgroundColor="#607D8B" />
             <CalcButton onPress={() => { this.onDigitPress("9") }} title="9" color="white" backgroundColor="#607D8B" />
-            <CalcButton onPress={() => { this.onBinaryOperatorPress(this.oc.MultiplicationOperator) }} title="x" color="white" backgroundColor="#DCA394" />
+            <CalcButton onPress={() => { this.onBinaryOperatorPress(this.oc.MultiplicationOperator, "x") }} title="x" color="white" backgroundColor="#DCA394" />
           </View>
 
           <View style={{flexDirection: "row", justifyContent: "space-between",}}>
             <CalcButton onPress={() => { this.onDigitPress("4") }} title="4" color="white" backgroundColor="#607D8B" />
             <CalcButton onPress={() => { this.onDigitPress("5") }} title="5" color="white" backgroundColor="#607D8B" />
             <CalcButton onPress={() => { this.onDigitPress("6") }} title="6" color="white" backgroundColor="#607D8B" />
-            <CalcButton onPress={() => { this.onBinaryOperatorPress(this.oc.SubtractionOperator) }} title="-" color="white" backgroundColor="#DCA394" />
+            <CalcButton onPress={() => { this.onBinaryOperatorPress(this.oc.SubtractionOperator, "-") }} title="-" color="white" backgroundColor="#DCA394" />
           </View>
 
           <View style={{flexDirection: "row", justifyContent: "space-between",}}>
             <CalcButton onPress={() => { this.onDigitPress("1") }} title="1" color="white" backgroundColor="#607D8B" />
             <CalcButton onPress={() => { this.onDigitPress("2") }} title="2" color="white" backgroundColor="#607D8B" />
             <CalcButton onPress={() => { this.onDigitPress("3") }} title="3" color="white" backgroundColor="#607D8B" />
-            <CalcButton onPress={() => { this.onBinaryOperatorPress(this.oc.AdditionOperator) }} title="+" color="white" backgroundColor="#DCA394" />
+            <CalcButton onPress={() => { this.onBinaryOperatorPress(this.oc.AdditionOperator, "+") }} title="+" color="white" backgroundColor="#DCA394" />
           </View>
 
           <View style={{flexDirection: "row", justifyContent: "space-between",}}>
             <CalcButton onPress={() => { this.onDigitPress("0") }} title="0" color="white" backgroundColor="#607D8B" style={{flex:2}} />
             <CalcButton onPress={() => { this.onDigitPress(".") }} title="." color="white" backgroundColor="#607D8B" />
-            <CalcButton onPress={this.onEqualsPress} title="=" color="white" backgroundColor="#DCA394" />
+            <CalcButton onPress={() => {this.onEqualsPress('=')}} title="=" color="white" backgroundColor="#DCA394" />
           </View>
         </View>
 
