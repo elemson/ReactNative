@@ -11,9 +11,9 @@ import React from 'react';
 import * as SQLite from 'expo-sqlite';
 import * as firebase from 'firebase'
 import { StyleSheet, Dimensions, PanResponder, View, Text } from 'react-native';
-import {AddHistory} from  './Firestore/Firestore'
+import {AddHistory} from  '../Firestore/Firestore'
 import { CalcDisplay, CalcButton } from './../components';
-import {firebaseConfig} from './Config/Firebase.config.js'
+import {firebaseConfig} from '../Config/Firebase.config.js'
 
 export default class CalculatorScreen extends React.Component {
 
@@ -31,7 +31,6 @@ export default class CalculatorScreen extends React.Component {
 
 	//Firebase
 	firebase.initializeApp(firebaseConfig);
-	// AddHistory(this.state.history)
 
 	// Sqlite db
 	// const db =SQLite.openDatabase('history.db')
@@ -76,6 +75,7 @@ export default class CalculatorScreen extends React.Component {
     this.calc.addDigit(digit);
 	let recentHistory = this.state.history.concat(digit)
     this.setState({ display: this.calc.getMainDisplay(), history: recentHistory });
+
   }
 
   onUnaryOperatorPress = (operator) => {
@@ -96,8 +96,9 @@ export default class CalculatorScreen extends React.Component {
 	this.setState({ display: recentHistory, history: recentHistory })
 
 	setTimeout(() => {
-		localStorage.setItem("Calc", this.state.history)
-		console.log(this.state.history)
+		// localStorage.setItem("Calc", this.state.history)
+		AddHistory(this.state.history)
+		console.log(typeof(this.state.history))
  	}, 3000);
   }
 
