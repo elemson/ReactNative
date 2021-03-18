@@ -9,8 +9,11 @@ require("../lib/swisscalc.calc.calculator.js");
 
 import React from 'react';
 import * as SQLite from 'expo-sqlite';
+import * as firebase from 'firebase'
 import { StyleSheet, Dimensions, PanResponder, View, Text } from 'react-native';
+import {AddHistory} from  './Firestore/Firestore'
 import { CalcDisplay, CalcButton } from './../components';
+import {firebaseConfig} from './Config/Firebase.config.js'
 
 export default class CalculatorScreen extends React.Component {
 
@@ -25,22 +28,27 @@ export default class CalculatorScreen extends React.Component {
     this.oc = global.swisscalc.lib.operatorCache;
     this.calc = new global.swisscalc.calc.calculator();
 
+
+	//Firebase
+	firebase.initializeApp(firebaseConfig);
+	// AddHistory(this.state.history)
+
 	// Sqlite db
-	const db =SQLite.openDatabase('history.db')
+	// const db =SQLite.openDatabase('history.db')
 	// this.success, //okcallback
 	// this.fail // error callback
 
 
-      db.transaction(tx => {
-        tx.executeSql('SELECT * FROM history', [], (tx, results) => {
-          let history = [];
-          for (let i = 0; i < results.rows.length; i++) {
-            history.push(results.rows.item(i));
-          }
+    //   db.transaction(tx => {
+    //     tx.executeSql('SELECT * FROM history', [], (tx, results) => {
+    //       let history = [];
+    //       for (let i = 0; i < results.rows.length; i++) {
+    //         history.push(results.rows.item(i));
+    //       }
 
-           this.setState({ history });
-        });
-      });
+    //        this.setState({ history });
+    //     });
+    //   });
 
     // Listen for orientation changes...
     Dimensions.addEventListener('change', () => {
@@ -146,11 +154,16 @@ export default class CalculatorScreen extends React.Component {
             <CalcButton onPress={() => { this.onBinaryOperatorPress(this.oc.AdditionOperator, "+") }} title="+" color="white" backgroundColor="#DCA394" />
           </View>
 
-          <View style={{flexDirection: "row", justifyContent: "space-between",}}>
+		  <View style={{flexDirection: "row", justifyContent: "space-between",}}>
             <CalcButton onPress={() => { this.onDigitPress("0") }} title="0" color="white" backgroundColor="#607D8B" style={{flex:2}} />
             <CalcButton onPress={() => { this.onDigitPress(".") }} title="." color="white" backgroundColor="#607D8B" />
             <CalcButton onPress={() => {this.onEqualsPress('=')}} title="=" color="white" backgroundColor="#DCA394" />
           </View>
+
+          <View style={{flexDirection: "row", justifyContent: "space-between",}}>
+            <CalcButton onPress={() => { this.onDigitPress(".") }} title="KM to Mile" color="white" backgroundColor="#607D8B"  style={{flex:1}} />
+          </View>
+
         </View>
 
       </View>
