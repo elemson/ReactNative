@@ -11,7 +11,7 @@ export const AddHistory = (data) => {
     });
 }
 
-export const getHistory = () => {
+export const GetHistory = () => {
   firebase.database().ref("history/").on('value', (snapshot) => {
     const historyValue = snapshot.val().equation;
     console.log(historyValue);
